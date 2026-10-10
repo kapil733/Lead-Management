@@ -38,6 +38,7 @@ export async function POST(request: Request) {
       headers: parsed.data.headers,
       previewRows: parsed.data.previewRows,
       totalRows: parsed.data.totalRows,
+      sections: parsed.data.sections,
       suggestedMapping,
     },
   });

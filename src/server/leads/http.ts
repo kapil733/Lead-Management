@@ -3,7 +3,7 @@ import "server-only";
 import { Role } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { auth } from "@/server/auth";
-import { IMPORT_MAX_BYTES } from "@/lib/validators/leads";
+import { IMPORT_MAX_BYTES, importCitiesSchema } from "@/lib/validators/leads";
 
 export async function requireAdminApi() {
   const session = await auth();
@@ -62,6 +62,23 @@ export async function readUploadFile(request: Request): Promise<
   }
   const buffer = Buffer.from(await file.arrayBuffer());
   return { ok: true, buffer, fileName: file.name };
+}
+
+export function parseCitiesField(
+  form: FormData,
+): { ok: true; cities: string[] | undefined } | { ok: false; error: string } {
+  const raw = form.get("cities");
+  if (raw == null || raw === "") return { ok: true, cities: undefined };
+  if (typeof raw !== "string") {
+    return { ok: false, error: "Invalid cities" };
+  }
+  try {
+    const parsed = importCitiesSchema.safeParse(JSON.parse(raw));
+    if (!parsed.success) return { ok: false, error: "Invalid cities" };
+    return { ok: true, cities: parsed.data };
+  } catch {
+    return { ok: false, error: "Invalid cities" };
+  }
 }
 
 export function parseMappingField(

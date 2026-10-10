@@ -122,7 +122,7 @@ Name/email read-only; change password (min 10, one number). Forced mode banner; 
 
 ### `/admin/leads/import`
 
-Stepper: Upload → Map → Review → Done + Import history with Revert.
+Stepper: Upload → Map → Review → Done + Import history with Revert. A workbook of stacked city tables adds a Cities step (multi-select, all on by default) between Map and Review.
 
 ### `/admin/leads`
 

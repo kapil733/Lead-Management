@@ -93,15 +93,19 @@ Rows of `{ phone (required if row present), name?, experienceText?, designation?
 
 ```mermaid
 flowchart LR
-  Upload --> Map --> Review --> Done
+  Upload --> Map --> Cities --> Review --> Done
+  Map --> Review
   Done --> History
   History -->|Revert NEW unclaimed| Pool
 ```
 
 1. **Upload** — `.xlsx`/`.csv`, ≤ 4 MB, ≤ 20,000 rows; sample template; parse server-side; return headers + first 5 rows.
 2. **Map** — map columns; Phone required; auto-guess headers; block Next until Phone mapped.
-3. **Review** — counts (valid new / duplicates / invalid); preview 20; error report download; import in chunks of 500 with `createMany({ skipDuplicates: true })`.
-4. **Done** — counts + links; `ImportBatch` created. History: Revert deletes only that batch's leads still `NEW` and never claimed.
+3. **Cities** — only when the sheet is stacked city tables (a title row such as NOIDA, then a repeated header). All cities start selected. At least one is required. A normal single table skips this step.
+4. **Review** — counts (valid new / duplicates / invalid) for the selected cities; preview 20; error report download; import in chunks of 500 with `createMany({ skipDuplicates: true })`.
+5. **Done** — counts + links; `ImportBatch` created. History: Revert deletes only that batch's leads still `NEW` and never claimed.
+
+Location in the row is stored as the lead city. If that cell is empty, the table title is used.
 
 ---
 

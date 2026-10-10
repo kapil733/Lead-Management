@@ -5,6 +5,7 @@ import {
   parseMappingField,
 } from "@/server/leads/http";
 import { parseLeadImportFile } from "@/server/leads/parse-file";
+import { scopeImportSheet } from "@/server/leads/import-scope";
 import { classifyMappedRows, mapRows } from "@/server/leads/classify";
 import { commitLeadImport } from "@/server/leads/import-batch";
 import { columnMappingSchema } from "@/lib/validators/leads";
@@ -76,10 +77,14 @@ export async function POST(request: Request) {
     );
   }
 
+  const scoped = scopeImportSheet(form, parsed.data);
+  if (!scoped.ok) return scoped.response;
+
   const mapped = mapRows(
-    parsed.data.headers,
-    parsed.data.rows,
+    scoped.sheet.headers,
+    scoped.sheet.rows,
     mappingParsed.data,
+    scoped.sheet.rowSections,
   );
   const classified = await classifyMappedRows(mapped);
 

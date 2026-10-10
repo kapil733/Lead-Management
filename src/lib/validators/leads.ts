@@ -5,6 +5,11 @@ export const IMPORT_MAX_BYTES = 4 * 1024 * 1024;
 export const IMPORT_MAX_ROWS = 20_000;
 export const IMPORT_CHUNK_SIZE = 500;
 
+/** City table names chosen on a multi-table import. */
+export const importCitiesSchema = z
+  .array(z.string().trim().min(1).max(80))
+  .max(200);
+
 export const columnTargetSchema = z.enum([
   "phone",
   "name",

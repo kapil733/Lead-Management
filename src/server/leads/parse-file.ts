@@ -6,11 +6,14 @@ import {
   IMPORT_MAX_BYTES,
   IMPORT_MAX_ROWS,
 } from "@/lib/validators/leads";
+import { flattenCityTables, type CitySection } from "@/lib/sheet-tables";
 
 export type ParsedSheet = {
   fileName: string;
   headers: string[];
   rows: string[][];
+  rowSections: string[];
+  sections: CitySection[];
   totalRows: number;
   previewRows: string[][];
 };
@@ -37,16 +40,6 @@ function cellToString(value: ExcelJS.CellValue): string {
   return String(value).trim();
 }
 
-function uniqueHeaders(raw: string[]): string[] {
-  const seen = new Map<string, number>();
-  return raw.map((h, i) => {
-    const base = h.trim() || `Column ${i + 1}`;
-    const count = seen.get(base) ?? 0;
-    seen.set(base, count + 1);
-    return count === 0 ? base : `${base} (${count + 1})`;
-  });
-}
-
 export async function parseLeadImportFile(
   buffer: Buffer,
   fileName: string,
@@ -65,8 +58,7 @@ export async function parseLeadImportFile(
     return { ok: false, error: "Only .xlsx and .csv files are accepted." };
   }
 
-  let headers: string[] = [];
-  let rows: string[][] = [];
+  let matrix: string[][] = [];
 
   if (isCsv) {
     const text = buffer.toString("utf8");
@@ -80,16 +72,9 @@ export async function parseLeadImportFile(
         error: parsed.errors[0]?.message ?? "Failed to parse CSV",
       };
     }
-    const all = parsed.data.filter((r) =>
-      r.some((c) => String(c ?? "").trim() !== ""),
-    );
-    if (all.length === 0) {
-      return { ok: false, error: "File has no rows." };
-    }
-    headers = uniqueHeaders((all[0] ?? []).map((c) => String(c ?? "").trim()));
-    rows = all.slice(1).map((r) =>
-      headers.map((_, i) => String(r[i] ?? "").trim()),
-    );
+    matrix = parsed.data
+      .filter((r) => r.some((c) => String(c ?? "").trim() !== ""))
+      .map((r) => r.map((c) => String(c ?? "").trim()));
   } else {
     const workbook = new ExcelJS.Workbook();
     // exceljs typings accept Buffer via ArrayBuffer-like
@@ -98,7 +83,6 @@ export async function parseLeadImportFile(
     if (!sheet) {
       return { ok: false, error: "Workbook has no worksheets." };
     }
-    const matrix: string[][] = [];
     sheet.eachRow({ includeEmpty: false }, (row) => {
       const values: string[] = [];
       row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
@@ -112,16 +96,18 @@ export async function parseLeadImportFile(
         matrix.push(values);
       }
     });
-    if (matrix.length === 0) {
-      return { ok: false, error: "File has no rows." };
-    }
-    const headerWidth = Math.max(...matrix.map((r) => r.length), 0);
-    headers = uniqueHeaders(
-      Array.from({ length: headerWidth }, (_, i) => matrix[0]?.[i] ?? ""),
-    );
-    rows = matrix.slice(1).map((r) =>
-      headers.map((_, i) => String(r[i] ?? "").trim()),
-    );
+  }
+
+  if (matrix.length === 0) {
+    return { ok: false, error: "File has no rows." };
+  }
+
+  const flat = flattenCityTables(matrix);
+  const headers = flat.headers;
+  const rows = flat.rows;
+
+  if (headers.length === 0 || rows.length === 0) {
+    return { ok: false, error: "File has no data rows." };
   }
 
   if (rows.length > IMPORT_MAX_ROWS) {
@@ -137,6 +123,8 @@ export async function parseLeadImportFile(
       fileName,
       headers,
       rows,
+      rowSections: flat.rowSections,
+      sections: flat.sections,
       totalRows: rows.length,
       previewRows: rows.slice(0, 5),
     },

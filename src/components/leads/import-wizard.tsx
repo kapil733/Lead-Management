@@ -25,7 +25,9 @@ import {
   type ColumnTarget,
 } from "@/lib/validators/leads";
 
-const STEPS = ["Upload", "Map columns", "Review", "Done"] as const;
+const BASE_STEPS = ["Upload", "Map columns", "Review", "Done"] as const;
+
+type CitySection = { name: string; count: number };
 
 const TARGET_OPTIONS = COLUMN_TARGET_OPTIONS;
 
@@ -60,6 +62,8 @@ export function ImportWizard({ onImported }: { onImported?: () => void }) {
   const [previewRows, setPreviewRows] = useState<string[][]>([]);
   const [totalRows, setTotalRows] = useState(0);
   const [mapping, setMapping] = useState<Record<string, ColumnTarget>>({});
+  const [sections, setSections] = useState<CitySection[]>([]);
+  const [selectedCities, setSelectedCities] = useState<string[]>([]);
   const [review, setReview] = useState<ReviewSummary | null>(null);
   const [done, setDone] = useState<DoneSummary | null>(null);
   const [pending, setPending] = useState(false);
@@ -69,6 +73,21 @@ export function ImportWizard({ onImported }: { onImported?: () => void }) {
     () => Object.values(mapping).includes("phone"),
     [mapping],
   );
+  const hasCities = sections.length > 0;
+  const reviewStep = hasCities ? 3 : 2;
+  const doneStep = hasCities ? 4 : 3;
+  const steps = hasCities
+    ? ["Upload", "Map columns", "Cities", "Review", "Done"]
+    : BASE_STEPS;
+  const selectedLeadCount = sections
+    .filter((section) => selectedCities.includes(section.name))
+    .reduce((sum, section) => sum + section.count, 0);
+
+  function appendCities(form: FormData) {
+    if (sections.length > 0) {
+      form.set("cities", JSON.stringify(selectedCities));
+    }
+  }
 
   async function handleParse(selected: File) {
     setError(null);
@@ -88,6 +107,7 @@ export function ImportWizard({ onImported }: { onImported?: () => void }) {
           headers: string[];
           previewRows: string[][];
           totalRows: number;
+          sections?: CitySection[];
           suggestedMapping: Record<string, ColumnTarget>;
         };
       };
@@ -100,6 +120,9 @@ export function ImportWizard({ onImported }: { onImported?: () => void }) {
       setPreviewRows(json.data.previewRows);
       setTotalRows(json.data.totalRows);
       setMapping(json.data.suggestedMapping);
+      const found = json.data.sections ?? [];
+      setSections(found);
+      setSelectedCities(found.map((section) => section.name));
       setStep(1);
     } catch {
       setError("Failed to parse file");
@@ -110,12 +133,17 @@ export function ImportWizard({ onImported }: { onImported?: () => void }) {
 
   async function handleReview() {
     if (!file || !phoneMapped) return;
+    if (sections.length > 0 && selectedCities.length === 0) {
+      setError("Select at least one city");
+      return;
+    }
     setError(null);
     setPending(true);
     try {
       const form = new FormData();
       form.set("file", file);
       form.set("mapping", JSON.stringify(mapping));
+      appendCities(form);
       const res = await fetch("/api/admin/leads/import/review", {
         method: "POST",
         body: form,
@@ -130,7 +158,7 @@ export function ImportWizard({ onImported }: { onImported?: () => void }) {
         return;
       }
       setReview(json.data);
-      setStep(2);
+      setStep(reviewStep);
     } catch {
       setError("Review failed");
     } finally {
@@ -146,6 +174,7 @@ export function ImportWizard({ onImported }: { onImported?: () => void }) {
       const form = new FormData();
       form.set("file", file);
       form.set("mapping", JSON.stringify(mapping));
+      appendCities(form);
       const res = await fetch("/api/admin/leads/import/commit", {
         method: "POST",
         body: form,
@@ -160,7 +189,7 @@ export function ImportWizard({ onImported }: { onImported?: () => void }) {
         return;
       }
       setDone(json.data);
-      setStep(3);
+      setStep(doneStep);
       toast.success(`Imported ${json.data.imported} leads`);
       onImported?.();
     } catch {
@@ -175,6 +204,7 @@ export function ImportWizard({ onImported }: { onImported?: () => void }) {
     const form = new FormData();
     form.set("file", file);
     form.set("mapping", JSON.stringify(mapping));
+    appendCities(form);
     const res = await fetch("/api/admin/leads/import/errors", {
       method: "POST",
       body: form,
@@ -198,6 +228,8 @@ export function ImportWizard({ onImported }: { onImported?: () => void }) {
     setHeaders([]);
     setPreviewRows([]);
     setTotalRows(0);
+    setSections([]);
+    setSelectedCities([]);
     setMapping({});
     setReview(null);
     setDone(null);
@@ -209,10 +241,11 @@ export function ImportWizard({ onImported }: { onImported?: () => void }) {
       <CardHeader>
         <CardTitle>Import leads</CardTitle>
         <CardDescription>
-          Upload an Excel or CSV file (max 4 MB / 20,000 rows).
+          Upload an Excel or CSV file (max 4 MB / 20,000 rows). A sheet with
+          one table per city lets you pick which cities to add.
         </CardDescription>
         <ol className="mt-4 flex flex-wrap gap-2">
-          {STEPS.map((label, i) => (
+          {steps.map((label, i) => (
             <li
               key={label}
               className={cn(
@@ -282,6 +315,9 @@ export function ImportWizard({ onImported }: { onImported?: () => void }) {
             <p className="text-sm text-muted">
               <FileSpreadsheet className="mr-1 inline size-4" />
               {file?.name} · {totalRows.toLocaleString()} rows
+              {hasCities
+                ? ` · ${sections.length} city tables`
+                : ""}
             </p>
             <div className="overflow-x-auto rounded-[var(--radius-control)] border border-border">
               <table className="w-full text-left text-sm">
@@ -338,7 +374,10 @@ export function ImportWizard({ onImported }: { onImported?: () => void }) {
               </Button>
               <Button
                 type="button"
-                onClick={() => void handleReview()}
+                onClick={() => {
+                  if (hasCities) setStep(2);
+                  else void handleReview();
+                }}
                 disabled={!phoneMapped || pending}
               >
                 {pending ? <Loader2 className="size-4 animate-spin" /> : null}
@@ -348,7 +387,92 @@ export function ImportWizard({ onImported }: { onImported?: () => void }) {
           </div>
         ) : null}
 
-        {step === 2 && review ? (
+        {step === 2 && hasCities ? (
+          <div className="space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="text-sm text-muted">
+                {selectedCities.length} of {sections.length} cities ·{" "}
+                {selectedLeadCount.toLocaleString()} leads
+              </p>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() =>
+                    setSelectedCities(sections.map((section) => section.name))
+                  }
+                >
+                  Select all
+                </Button>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => setSelectedCities([])}
+                >
+                  Clear
+                </Button>
+              </div>
+            </div>
+            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+              {sections.map((section) => {
+                const checked = selectedCities.includes(section.name);
+                return (
+                  <label
+                    key={section.name}
+                    className={cn(
+                      "flex cursor-pointer items-center justify-between gap-3 rounded-[var(--radius-control)] border px-3 py-2 text-sm",
+                      checked
+                        ? "border-primary bg-primary-soft"
+                        : "border-border bg-surface",
+                    )}
+                  >
+                    <span className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        className="size-4 accent-primary"
+                        checked={checked}
+                        onChange={() =>
+                          setSelectedCities((current) =>
+                            checked
+                              ? current.filter((name) => name !== section.name)
+                              : [...current, section.name],
+                          )
+                        }
+                      />
+                      <span className="font-medium">{section.name}</span>
+                    </span>
+                    <span className="tabular text-muted">{section.count}</span>
+                  </label>
+                );
+              })}
+            </div>
+            {selectedCities.length === 0 ? (
+              <p className="text-sm text-danger">
+                Select at least one city to continue.
+              </p>
+            ) : null}
+            <div className="flex flex-wrap gap-2">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => setStep(1)}
+                disabled={pending}
+              >
+                Back
+              </Button>
+              <Button
+                type="button"
+                onClick={() => void handleReview()}
+                disabled={selectedCities.length === 0 || pending}
+              >
+                {pending ? <Loader2 className="size-4 animate-spin" /> : null}
+                Next
+              </Button>
+            </div>
+          </div>
+        ) : null}
+
+        {step === reviewStep && review ? (
           <div className="space-y-4">
             <div className="grid gap-3 sm:grid-cols-4">
               <SummaryCard label="Total rows" value={review.totalRows} />
@@ -409,7 +533,7 @@ export function ImportWizard({ onImported }: { onImported?: () => void }) {
               <Button
                 type="button"
                 variant="secondary"
-                onClick={() => setStep(1)}
+                onClick={() => setStep(hasCities ? 2 : 1)}
                 disabled={pending}
               >
                 Back
@@ -435,7 +559,7 @@ export function ImportWizard({ onImported }: { onImported?: () => void }) {
           </div>
         ) : null}
 
-        {step === 3 && done ? (
+        {step === doneStep && done ? (
           <div className="space-y-4 text-center">
             <CheckCircle2 className="mx-auto size-12 text-success" />
             <div>

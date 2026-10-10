@@ -29,6 +29,7 @@ export function mapRows(
   headers: string[],
   rows: string[][],
   mapping: Record<string, ColumnTarget>,
+  rowSections: string[] = [],
 ): MappedLeadRow[] {
   const phoneHeader = Object.entries(mapping).find(([, t]) => t === "phone")?.[0];
   if (!phoneHeader) {
@@ -93,6 +94,9 @@ export function mapRows(
           break;
       }
     }
+
+    const section = rowSections[index]?.trim() ?? "";
+    if (!city && section) city = section;
 
     const phone = rawPhone ? normalisePhone(rawPhone) : null;
     const mapped: MappedLeadRow = {

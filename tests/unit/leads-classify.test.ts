@@ -132,6 +132,24 @@ describe("mapRows", () => {
     });
   });
 
+  it("uses the city table name when location is blank", () => {
+    const mapped = mapRows(
+      ["Mobile No.", "Name", "Location"],
+      [
+        ["9876543210", "Vishal", "Noida"],
+        ["9123456780", "Rohan", ""],
+      ],
+      {
+        "Mobile No.": "phone",
+        Name: "name",
+        Location: "city",
+      },
+      ["NOIDA", "MUMBAI"],
+    );
+    expect(mapped[0]?.city).toBe("Noida");
+    expect(mapped[1]?.city).toBe("MUMBAI");
+  });
+
   it("collects extra columns", () => {
     const mapped = mapRows(
       ["Phone", "Notes"],
