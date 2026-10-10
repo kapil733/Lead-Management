@@ -52,3 +52,4 @@ One line per decision. Add a line when introducing a new framework/lib or changi
 | 2026-10-07 | Phase 10: Docker Compose Postgres 16 on host port **5436**; GitHub Actions CI with Postgres service. |
 | 2026-10-07 | Phase 10 e2e suite: auth RBAC + smoke + attendance (`pnpm test:e2e`). |
 | 2026-10-10 | Visual system matches the ops-console reference: lime `#C8F13C` on charcoal, light theme via `data-theme` + `localStorage` `tc-theme`. Fonts: Bricolage Grotesque, Instrument Sans, JetBrains Mono (`next/font`, no new package). |
+| 2026-10-10 | Product name is EVerified. Accent is `#12A56E` (white button text), taken from the EVerified site green. |

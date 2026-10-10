@@ -1,4 +1,4 @@
-# TechConnect Ops — Product
+# EVerified — Product
 
 ## One paragraph
 

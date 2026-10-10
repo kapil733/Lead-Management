@@ -36,7 +36,7 @@ export function EmployeeShell({
           <Link href="/app" className="flex items-center gap-2.5">
             <LogoMark className="size-[34px] rounded-[10px]" iconClassName="size-[18px]" />
             <span className="font-display text-[17px] font-bold tracking-tight">
-              TechConnect
+              EVerified
             </span>
           </Link>
           <nav

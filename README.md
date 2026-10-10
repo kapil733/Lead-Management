@@ -1,4 +1,4 @@
-# TechConnect Ops
+# EVerified
 
 Internal **Lead CRM** + **contract payroll** for a technician workforce platform.
 

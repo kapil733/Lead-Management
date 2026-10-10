@@ -56,7 +56,8 @@ Requires `outcome`.
 | Outcome | Rating | Remarks | Lead after |
 |---|---|---|---|
 | `CONNECTED` | Required 0–5 | Required ≥ 3 chars | `CLOSED` |
-| `NO_ANSWER` / `SWITCHED_OFF` / `CALL_BACK_LATER` | Hidden | Optional | `NEW` + cooldown; or `EXHAUSTED` if attempts ≥ max |
+| `NO_ANSWER` / `SWITCHED_OFF` | Hidden | Optional | `NEW` + cooldown; or `EXHAUSTED` if attempts ≥ max |
+| `CALL_BACK_LATER` (shown as Reconnect) | Hidden | Required ≥ 3 chars, kept for the next open of this lead | `NEW` + cooldown; or `EXHAUSTED` if attempts ≥ max. From her history she can Open that row and call again immediately (skips cooldown). |
 | `WRONG_NUMBER` | Hidden | Optional | `CLOSED` (never retried) |
 
 - Increment `attempts` for retry outcomes.

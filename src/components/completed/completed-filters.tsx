@@ -3,6 +3,7 @@
 import { useQueryState, parseAsString, parseAsInteger } from "nuqs";
 import { useTransition } from "react";
 import { CallOutcome } from "@prisma/client";
+import { outcomeLabel } from "@/lib/outcomes";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -102,7 +103,7 @@ export function CompletedFilters() {
           <option value="">All</option>
           {OUTCOMES.map((o) => (
             <option key={o} value={o}>
-              {o.replaceAll("_", " ")}
+              {outcomeLabel(o)}
             </option>
           ))}
         </select>

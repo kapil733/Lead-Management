@@ -1,6 +1,7 @@
 import "server-only";
 
 import { CaseStatus } from "@prisma/client";
+import type { PriorRemark } from "@/lib/outcomes";
 import { formatInTimeZone } from "date-fns-tz";
 import { prisma } from "@/server/db";
 import { writeAudit } from "@/server/audit/write";
@@ -26,6 +27,42 @@ export async function getOpenCaseForEmployee(employeeId: string) {
         },
       },
     },
+  });
+}
+
+/** Earlier remarks on this lead, newest first. Shown when the lead is opened again. */
+export async function getPriorRemarks(
+  leadId: string,
+  currentCaseId: string,
+): Promise<PriorRemark[]> {
+  const rows = await prisma.case.findMany({
+    where: {
+      leadId,
+      id: { not: currentCaseId },
+      status: CaseStatus.CLOSED,
+      remarks: { not: null },
+    },
+    orderBy: { closedAt: "desc" },
+    take: 5,
+    select: {
+      id: true,
+      remarks: true,
+      outcome: true,
+      closedAt: true,
+    },
+  });
+
+  return rows.flatMap((row) => {
+    const remarks = row.remarks?.trim();
+    if (!remarks || !row.outcome || !row.closedAt) return [];
+    return [
+      {
+        id: row.id,
+        remarks,
+        outcome: row.outcome,
+        closedAt: row.closedAt.toISOString(),
+      },
+    ];
   });
 }
 

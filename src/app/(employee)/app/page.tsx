@@ -7,6 +7,7 @@ import { getEmployeeHomeStats } from "@/server/cases/active";
 import { HomeClaimButton } from "@/components/case/home-claim-button";
 import { RatingChip } from "@/components/leads/status-badge";
 import { formatDisplayDate } from "@/lib/dates";
+import { outcomeLabel } from "@/lib/outcomes";
 
 function greeting(): string {
   const hour = Number(
@@ -118,9 +119,7 @@ export default async function EmployeeHomePage() {
                     </p>
                     <p className="mt-1 font-mono text-[11px] text-muted">
                       {c.closedAt ? formatDisplayDate(c.closedAt) : "—"}
-                      {c.outcome
-                        ? ` · ${c.outcome.replaceAll("_", " ")}`
-                        : ""}
+                      {c.outcome ? ` · ${outcomeLabel(c.outcome)}` : ""}
                     </p>
                   </div>
                   <RatingChip rating={c.rating} />

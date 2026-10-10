@@ -1,6 +1,6 @@
 # UI Spec
 
-Overall feel: charged ops console. Lime accent on charcoal (dark default) with a paper light theme. Display type for titles, mono for numbers, phones, and kickers. Admin is a top bar (logo, Recruitment/Payroll switch, search, theme, user) plus a 248px rail. Employee is a calling desk: Desk / History, one case at a time.
+Overall feel: charged ops console. EVerified green accent on charcoal (dark default) with a paper light theme. Display type for titles, mono for numbers, phones, and kickers. Admin is a top bar (logo, Recruitment/Payroll switch, search, theme, user) plus a 248px rail. Employee is a calling desk: Desk / History, one case at a time.
 
 Dark is the default. Light is toggled from the sun/moon control and stored in `localStorage` key `tc-theme`.
 
@@ -17,10 +17,10 @@ Put in `globals.css` as CSS variables; map in Tailwind. **No hardcoded hex in co
 | `--border-strong` | `#5A6C62` | Inputs, inactive chips |
 | `--text` | `#ECF0E6` | Primary text |
 | `--muted` | `#8C968A` | Secondary text |
-| `--primary` | `#C8F13C` | Buttons, active segment, accent |
-| `--primary-fg` | `#0A0C0B` | Text on primary |
-| `--primary-hover` | `#D4F56A` | |
-| `--primary-soft` | lime at 16% | Soft chips |
+| `--primary` | `#12A56E` | Buttons, active segment, accent. White label text. |
+| `--primary-fg` | `#FFFFFF` | Text on primary |
+| `--primary-hover` | `#18B87C` | |
+| `--primary-soft` | green at 18% | Soft chips |
 | `--success` | `#5BE3A4` | Positive |
 | `--warning` | `#FFB224` | Pool low, caution |
 | `--danger` | `#FF6A55` | Errors, release |
@@ -101,7 +101,7 @@ Desktop: two columns (40% lead card / 60% outcome form). Mobile: stacked + stick
 
 - Phone large tabular with spaces; `tel:` Call button sets `callClickedAt` once; no copy; `user-select: none`.
 - Live timer since `startedAt`.
-- Outcome chips single-select; non-Connected hides rating, remarks optional.
+- Outcome chips single-select. Connected requires rating and remarks. Reconnect (`CALL_BACK_LATER`) requires remarks, which are shown the next time that lead is opened. Other outcomes: remarks optional.
 - Rating: six large buttons (min 56px); captions: `0–1 Not interested…`, `2 Maybe later`, `3 Interested`, `4 Keen to join`, `5 Will join and bring friends`. Keys `0`–`5` on desktop.
 - Friends rows optional; designation suggestions listed in PRODUCT flows.
 - Draft autosave to `localStorage` by case id every 2s.
@@ -110,7 +110,7 @@ Desktop: two columns (40% lead card / 60% outcome form). Mobile: stacked + stick
 
 ### `/app/completed`
 
-Table (cards on mobile): datetime, name, phone, outcome, rating, friends count, Joined toggle, remarks preview. Filters + search within own cases only. Side drawer on row click. Paginate 25. **No export**.
+Table (cards on mobile): datetime, name, outcome, rating, friends count, Joined toggle, remarks preview. Phone numbers are not on the list. Opening one row loads that lead's number and remark. Reconnect rows have **Open**, which starts that lead again on the case desk so she can call and close the case. Earlier remarks stay visible. Filters + search within own cases only. Paginate 25. **No export**.
 
 ### `/app/profile`
 

@@ -131,7 +131,7 @@ export function AdminShell({
           <LogoMark />
           <span>
             <span className="block font-display text-lg font-bold leading-none tracking-tight">
-              TechConnect
+              EVerified
             </span>
             <span className="mt-1 block font-mono text-[11px] tracking-[0.14em] text-muted">
               OPS CONSOLE

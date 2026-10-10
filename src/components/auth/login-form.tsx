@@ -46,7 +46,7 @@ export function LoginForm() {
         <div className="flex items-center gap-3">
           <LogoMark className="size-10 rounded-xl" />
           <div className="font-display text-xl font-bold tracking-tight">
-            TechConnect <span className="font-medium text-muted">Ops</span>
+            EVerified
           </div>
         </div>
 

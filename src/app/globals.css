@@ -1,5 +1,5 @@
 @import "tailwindcss";
-/* ops console visual system */
+/* EVerified ops console */
 
 :root,
 [data-theme="dark"] {
@@ -11,11 +11,11 @@
   --text: #ecf0e6;
   --muted: #8c968a;
   --muted-2: #5e685c;
-  --primary: #c8f13c;
-  --primary-hover: #d4f56a;
-  --primary-fg: #0a0c0b;
-  --primary-soft: rgba(200, 241, 60, 0.16);
-  --accent-text: #c8f13c;
+  --primary: #12a56e;
+  --primary-hover: #18b87c;
+  --primary-fg: #ffffff;
+  --primary-soft: rgba(18, 165, 110, 0.18);
+  --accent-text: #3dcc8e;
   --success: #5be3a4;
   --success-soft: rgba(91, 227, 164, 0.14);
   --success-strong: #5be3a4;
@@ -29,7 +29,7 @@
   --rating-0: #ff6a55;
   --rating-1: #ff8a3d;
   --rating-2: #ffb224;
-  --rating-3: #c8f13c;
+  --rating-3: #12a56e;
   --rating-4: #5be3a4;
   --rating-5: #2fbf7a;
 
@@ -62,11 +62,11 @@
   --text: #10130e;
   --muted: #566051;
   --muted-2: #8b9486;
-  --primary: #c8f13c;
-  --primary-hover: #b6e02a;
-  --primary-fg: #0a0c0b;
-  --primary-soft: rgba(200, 241, 60, 0.45);
-  --accent-text: color-mix(in srgb, #c8f13c 35%, #000);
+  --primary: #0e9a64;
+  --primary-hover: #0c8758;
+  --primary-fg: #ffffff;
+  --primary-soft: rgba(14, 154, 100, 0.16);
+  --accent-text: #0b7a4e;
   --success: #0a7f55;
   --success-soft: rgba(10, 127, 85, 0.12);
   --success-strong: #0a7f55;

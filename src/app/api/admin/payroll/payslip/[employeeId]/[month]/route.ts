@@ -56,7 +56,7 @@ export async function GET(
 
   const pdf = await renderPayslipPdf({
     month,
-    companyName: "TechConnect Ops",
+    companyName: "EVerified",
     employeeCode: line.employee.employeeCode,
     fullName: line.employee.fullName,
     designation: line.employee.designation,

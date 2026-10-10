@@ -104,7 +104,7 @@ export async function exportPayslipsZip(month: string): Promise<Buffer> {
     });
     const pdf = await renderPayslipPdf({
       month,
-      companyName: "TechConnect Ops",
+      companyName: "EVerified",
       employeeCode: l.employeeCode,
       fullName: l.fullName,
       designation: emp?.designation,

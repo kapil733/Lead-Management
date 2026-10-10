@@ -87,6 +87,10 @@ Lead import “Map to” now includes every column from the Halla workbook (DOB,
 
 The open-case page fits one screen. Close case uses the green button. The profile card stays on the left. Friends sit at the top right. Call outcome stays bottom left, with remarks filling the bottom right. The profile and friends cards take twice the height of the call and remarks cards. Profile fields use the earlier three-column layout and stretch to fill that card. Friend rows stay compact. Friends are added, edited, and deleted in a modal.
 
+## Calling desk (2026-10-10)
+
+Employee history no longer lists phone numbers. Opening one history row loads that lead's number and saved remark. Reconnect requires a remark of at least 3 characters; those remarks show on the next open of the same lead. Reconnect history rows have Open, which starts that call again on the case desk with Close case. The app name is EVerified and the accent is `#12A56E`.
+
 ## All phases complete
 
 No further phased build work in the master checklist. Follow-ups (Redis rate limits, employee Excel import wizard, branding settings) are tracked in `docs/OPEN_QUESTIONS.md`.

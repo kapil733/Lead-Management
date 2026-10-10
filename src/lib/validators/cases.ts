@@ -49,10 +49,18 @@ export const closeCaseSchema = z
           path: ["rating"],
         });
       }
+    }
+    if (
+      data.outcome === CallOutcome.CONNECTED ||
+      data.outcome === CallOutcome.CALL_BACK_LATER
+    ) {
       if (!data.remarks || data.remarks.length < 3) {
         ctx.addIssue({
           code: "custom",
-          message: "Remarks must be at least 3 characters when connected",
+          message:
+            data.outcome === CallOutcome.CALL_BACK_LATER
+              ? "Add a remark of at least 3 characters for reconnect"
+              : "Remarks must be at least 3 characters when connected",
           path: ["remarks"],
         });
       }

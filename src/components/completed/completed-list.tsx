@@ -2,13 +2,14 @@
 
 import { useState, useTransition } from "react";
 import { useQueryState, parseAsInteger } from "nuqs";
-import type { CallOutcome } from "@prisma/client";
-import { formatPhoneDisplay } from "@/lib/phone";
+import { CallOutcome } from "@prisma/client";
 import { formatDisplayDateTime } from "@/lib/dates";
+import { outcomeLabel } from "@/lib/outcomes";
 import { JoinedToggle } from "@/components/leads/joined-toggle";
 import { RatingChip } from "@/components/leads/status-badge";
 import { Button } from "@/components/ui/button";
 import { CompletedDrawer } from "@/components/completed/completed-drawer";
+import { OpenReconnectButton } from "@/components/completed/open-reconnect-button";
 
 export type CompletedRow = {
   id: string;
@@ -19,16 +20,8 @@ export type CompletedRow = {
   durationSeconds: number | null;
   friendsCount: number;
   leadId: string;
-  phone: string;
   name: string | null;
   joined: boolean;
-  referrals: {
-    id: string;
-    phone: string;
-    name: string | null;
-    experienceText: string | null;
-    designation: string | null;
-  }[];
 };
 
 export function CompletedList({
@@ -48,7 +41,7 @@ export function CompletedList({
       startTransition,
     }),
   );
-  const [selected, setSelected] = useState<CompletedRow | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const from = total === 0 ? 0 : (page - 1) * pageSize + 1;
   const to = Math.min(page * pageSize, total);
@@ -67,31 +60,26 @@ export function CompletedList({
 
   return (
     <>
-      {/* Mobile cards */}
       <div className="space-y-3 md:hidden">
         {rows.map((row) => (
           <div
             key={row.id}
             role="button"
             tabIndex={0}
-            onClick={() => setSelected(row)}
+            onClick={() => setSelectedId(row.id)}
             onKeyDown={(e) => {
               if (e.key === "Enter" || e.key === " ") {
                 e.preventDefault();
-                setSelected(row);
+                setSelectedId(row.id);
               }
             }}
             className="w-full rounded-[var(--radius-card)] border border-border bg-surface p-4 text-left shadow-[var(--shadow-card)]"
           >
             <div className="flex items-start justify-between gap-2">
               <div>
-                <p className="text-sm font-medium">
-                  {row.name ?? formatPhoneDisplay(row.phone)}
-                </p>
+                <p className="text-sm font-medium">{row.name ?? "Unnamed"}</p>
                 <p className="text-xs text-muted tabular">
-                  {row.closedAt
-                    ? formatDisplayDateTime(row.closedAt)
-                    : "—"}
+                  {row.closedAt ? formatDisplayDateTime(row.closedAt) : "—"}
                 </p>
               </div>
               <div onClick={(e) => e.stopPropagation()}>
@@ -104,7 +92,7 @@ export function CompletedList({
             </div>
             <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
               <span className="rounded-full bg-surface-2 px-2 py-0.5">
-                {row.outcome?.replaceAll("_", " ") ?? "—"}
+                {outcomeLabel(row.outcome)}
               </span>
               {row.rating != null ? <RatingChip rating={row.rating} /> : null}
               <span className="text-muted">{row.friendsCount} friends</span>
@@ -114,11 +102,15 @@ export function CompletedList({
                 {row.remarks}
               </p>
             ) : null}
+            {row.outcome === CallOutcome.CALL_BACK_LATER ? (
+              <div className="mt-3" onClick={(e) => e.stopPropagation()}>
+                <OpenReconnect id={row.id} />
+              </div>
+            ) : null}
           </div>
         ))}
       </div>
 
-      {/* Desktop table */}
       <div className="hidden space-y-3 md:block">
         <div className="overflow-x-auto rounded-[var(--radius-card)] border border-border bg-surface shadow-[var(--shadow-card)]">
           <table className="w-full text-left text-[13px] leading-[18px]">
@@ -126,12 +118,14 @@ export function CompletedList({
               <tr>
                 <th className="px-3 py-2 font-medium">Closed</th>
                 <th className="px-3 py-2 font-medium">Name</th>
-                <th className="px-3 py-2 font-medium">Phone</th>
                 <th className="px-3 py-2 font-medium">Outcome</th>
                 <th className="px-3 py-2 font-medium">Rating</th>
                 <th className="px-3 py-2 font-medium">Friends</th>
                 <th className="px-3 py-2 font-medium">Joined</th>
                 <th className="px-3 py-2 font-medium">Remarks</th>
+                <th className="px-3 py-2 font-medium">
+                  <span className="sr-only">Open</span>
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -139,20 +133,13 @@ export function CompletedList({
                 <tr
                   key={row.id}
                   className="h-10 cursor-pointer border-t border-border hover:bg-surface-2"
-                  onClick={() => setSelected(row)}
+                  onClick={() => setSelectedId(row.id)}
                 >
                   <td className="px-3 py-1 tabular text-muted">
-                    {row.closedAt
-                      ? formatDisplayDateTime(row.closedAt)
-                      : "—"}
+                    {row.closedAt ? formatDisplayDateTime(row.closedAt) : "—"}
                   </td>
-                  <td className="px-3 py-1">{row.name ?? "—"}</td>
-                  <td className="px-3 py-1 tabular">
-                    {formatPhoneDisplay(row.phone)}
-                  </td>
-                  <td className="px-3 py-1">
-                    {row.outcome?.replaceAll("_", " ") ?? "—"}
-                  </td>
+                  <td className="px-3 py-1">{row.name ?? "Unnamed"}</td>
+                  <td className="px-3 py-1">{outcomeLabel(row.outcome)}</td>
                   <td className="px-3 py-1">
                     {row.rating != null ? (
                       <RatingChip rating={row.rating} />
@@ -173,6 +160,14 @@ export function CompletedList({
                   </td>
                   <td className="max-w-[180px] truncate px-3 py-1 text-muted">
                     {row.remarks ?? "—"}
+                  </td>
+                  <td
+                    className="px-3 py-1"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {row.outcome === CallOutcome.CALL_BACK_LATER ? (
+                      <OpenReconnect id={row.id} />
+                    ) : null}
                   </td>
                 </tr>
               ))}
@@ -208,12 +203,16 @@ export function CompletedList({
       </div>
 
       <CompletedDrawer
-        row={selected}
-        open={selected != null}
+        caseId={selectedId}
+        open={selectedId != null}
         onOpenChange={(open) => {
-          if (!open) setSelected(null);
+          if (!open) setSelectedId(null);
         }}
       />
     </>
   );
+}
+
+function OpenReconnect({ id }: { id: string }) {
+  return <OpenReconnectButton caseId={id} />;
 }

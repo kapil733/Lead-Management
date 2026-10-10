@@ -1,7 +1,10 @@
 import { redirect } from "next/navigation";
 import { Role } from "@prisma/client";
 import { auth } from "@/server/auth";
-import { getOpenCaseForEmployee } from "@/server/cases/active";
+import {
+  getOpenCaseForEmployee,
+  getPriorRemarks,
+} from "@/server/cases/active";
 import { getAppSettings } from "@/server/settings";
 import { ActiveCaseForm } from "@/components/case/active-case-form";
 import { leadExtra } from "@/lib/lead-extra";
@@ -21,6 +24,8 @@ export default async function ActiveCasePage() {
   if (!open) {
     redirect("/app");
   }
+
+  const priorRemarks = await getPriorRemarks(open.lead.id, open.id);
 
   return (
     <ActiveCaseForm
@@ -42,6 +47,7 @@ export default async function ActiveCasePage() {
         source: open.lead.source,
         attempts: open.lead.attempts,
       }}
+      priorRemarks={priorRemarks}
     />
   );
 }

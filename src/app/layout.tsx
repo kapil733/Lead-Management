@@ -28,8 +28,8 @@ const mono = JetBrains_Mono({
 const themeBoot = `(function(){try{var t=localStorage.getItem('tc-theme')||'dark';if(t!=='light'&&t!=='dark')t='dark';document.documentElement.dataset.theme=t;document.documentElement.style.colorScheme=t;}catch(e){document.documentElement.dataset.theme='dark';}})();`;
 
 export const metadata: Metadata = {
-  title: "TechConnect Ops",
-  description: "Lead CRM and contract payroll for technician workforce ops",
+  title: "EVerified",
+  description: "Lead CRM and contract payroll for the EVerified workforce",
 };
 
 export default function RootLayout({

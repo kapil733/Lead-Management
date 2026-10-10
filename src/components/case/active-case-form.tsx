@@ -41,6 +41,8 @@ import {
 import { DESIGNATION_SUGGESTIONS } from "@/lib/validators/cases";
 import { claimNextCaseAction, closeCaseAction } from "@/server/cases/actions";
 import { profileEntries } from "@/lib/lead-extra";
+import { outcomeLabel, type PriorRemark } from "@/lib/outcomes";
+import { formatDisplayDateTime } from "@/lib/dates";
 import { cn } from "@/lib/utils";
 import type { LeadSource } from "@prisma/client";
 
@@ -49,7 +51,7 @@ const OUTCOMES: { value: CallOutcome; label: string }[] = [
   { value: CallOutcome.NO_ANSWER, label: "No answer" },
   { value: CallOutcome.SWITCHED_OFF, label: "Switched off" },
   { value: CallOutcome.WRONG_NUMBER, label: "Wrong number" },
-  { value: CallOutcome.CALL_BACK_LATER, label: "Call back later" },
+  { value: CallOutcome.CALL_BACK_LATER, label: "Reconnect" },
 ];
 
 type ReferralDraft = {
@@ -149,11 +151,13 @@ export function ActiveCaseForm({
   startedAt,
   maxAttempts,
   lead,
+  priorRemarks,
 }: {
   caseId: string;
   startedAt: string;
   maxAttempts: number;
   lead: LeadInfo;
+  priorRemarks: PriorRemark[];
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -229,13 +233,13 @@ export function ActiveCaseForm({
   }, [outcome, caseId]);
 
   const connected = outcome === CallOutcome.CONNECTED;
+  const reconnect = outcome === CallOutcome.CALL_BACK_LATER;
+  const remarksRequired = connected || reconnect;
 
   const canSubmit = useMemo(() => {
     if (!outcome) return false;
-    if (connected) {
-      if (rating == null) return false;
-      if (remarks.trim().length < 3) return false;
-    }
+    if (connected && rating == null) return false;
+    if (remarksRequired && remarks.trim().length < 3) return false;
     for (const row of referrals) {
       const hasOther =
         Boolean(row.name.trim()) ||
@@ -245,7 +249,7 @@ export function ActiveCaseForm({
       if (row.phone.trim() && !normalisePhone(row.phone)) return false;
     }
     return true;
-  }, [outcome, connected, rating, remarks, referrals]);
+  }, [outcome, connected, remarksRequired, rating, remarks, referrals]);
 
   const friendHint = useMemo(() => {
     for (const row of referrals) {
@@ -317,8 +321,10 @@ export function ActiveCaseForm({
         ? "Pick an outcome to close"
         : connected && rating == null
           ? "Add an interest rating"
-          : connected && remarks.trim().length < 3
-            ? "Remarks need at least 3 characters"
+          : remarksRequired && remarks.trim().length < 3
+            ? reconnect
+              ? "Add a remark so the next call has context"
+              : "Remarks need at least 3 characters"
             : null))
     : null;
 
@@ -439,6 +445,23 @@ export function ActiveCaseForm({
             <p className="phone-no-select mt-2 font-mono text-3xl font-medium leading-none tracking-tight">
               {formatPhoneDisplay(lead.phone)}
             </p>
+            {priorRemarks.length > 0 ? (
+              <div className="mt-3 max-h-24 space-y-2 overflow-auto rounded-xl border border-border bg-surface-2 px-3 py-2">
+                <p className="font-mono text-[11px] font-medium tracking-[0.08em] text-muted">
+                  PREVIOUS REMARKS
+                </p>
+                {priorRemarks.map((note) => (
+                  <p key={note.id} className="text-sm leading-snug">
+                    <span className="text-muted">
+                      {outcomeLabel(note.outcome)} ·{" "}
+                      {formatDisplayDateTime(note.closedAt)}
+                      {" — "}
+                    </span>
+                    {note.remarks}
+                  </p>
+                ))}
+              </div>
+            ) : null}
           </div>
           <div className="flex min-w-[220px] flex-1 flex-col gap-1.5 sm:max-w-xs">
             <Button
@@ -589,7 +612,7 @@ export function ActiveCaseForm({
 
         <section className="flex h-full min-h-0 flex-col overflow-hidden rounded-[22px] border border-border bg-surface px-5 py-4">
           <Label htmlFor="remarks" className="text-[13px] text-muted">
-            Remarks {connected ? "" : "(optional)"}
+            Remarks {remarksRequired ? "" : "(optional)"}
           </Label>
           <textarea
             id="remarks"
@@ -597,9 +620,11 @@ export function ActiveCaseForm({
             onChange={(e) => setRemarks(e.target.value)}
             className="mt-2 min-h-0 w-full flex-1 resize-none rounded-xl border border-border-strong bg-bg px-3 py-2 text-sm leading-normal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-text"
             placeholder={
-              connected
-                ? "What did they say? At least 3 characters."
-                : "Optional notes about this attempt"
+              reconnect
+                ? "What should you say next time? At least 3 characters."
+                : connected
+                  ? "What did they say? At least 3 characters."
+                  : "Optional notes about this attempt"
             }
           />
           {error ? (
@@ -632,7 +657,7 @@ export function ActiveCaseForm({
               You can&apos;t edit the rating afterwards.
             </p>
             <ul className="mt-3 space-y-1 text-sm">
-              <li>Outcome: {outcome?.replaceAll("_", " ")}</li>
+              <li>Outcome: {outcomeLabel(outcome)}</li>
               {connected ? <li>Rating: {rating}</li> : null}
               <li>Friends: {referrals.filter((r) => r.phone.trim()).length}</li>
             </ul>

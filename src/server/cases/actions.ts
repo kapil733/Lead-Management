@@ -2,7 +2,7 @@
 
 import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
-import { Role } from "@prisma/client";
+import { CallOutcome, Role } from "@prisma/client";
 import { z } from "zod";
 import {
   requireRole,
@@ -11,8 +11,10 @@ import {
 } from "@/server/auth/session";
 import { fail, ok, type ActionResult } from "@/server/action-result";
 import { claimNextCase } from "@/server/cases/claim";
+import { reopenReconnectCase } from "@/server/cases/reopen";
 import { closeCase } from "@/server/cases/close";
 import { markCallClicked } from "@/server/cases/active";
+import { getCompletedCaseDetail } from "@/server/cases/completed";
 import { setLeadJoined } from "@/server/leads/joined";
 import {
   consumeRateLimit,
@@ -63,6 +65,41 @@ export async function claimNextCaseAction(): Promise<
 
   revalidatePath("/app");
   revalidatePath("/app/case");
+  return ok(result.data);
+}
+
+/** Open a reconnect from history so she can call that person again. */
+export async function reopenReconnectAction(
+  caseId: string,
+): Promise<ActionResult<{ caseId: string; leadId: string; resumed: boolean }>> {
+  const gate = await requireEmployee();
+  if (isActionResult(gate)) return authFail(gate);
+
+  const parsed = z.object({ caseId: z.string().min(1) }).safeParse({ caseId });
+  if (!parsed.success) {
+    return fail("VALIDATION", "caseId is required");
+  }
+
+  const rl = consumeRateLimit(`claim:${gate.id}`, RATE_LIMITS.claim);
+  if (!rl.ok) {
+    return fail(
+      "RATE_LIMIT",
+      `Too many attempts. Try again in ${rl.retryAfterSeconds}s.`,
+    );
+  }
+
+  const result = await reopenReconnectCase({
+    employeeId: gate.id,
+    historyCaseId: parsed.data.caseId,
+    ip: await clientIp(),
+  });
+  if (!result.ok) {
+    return fail(result.error.code, result.error.message);
+  }
+
+  revalidatePath("/app");
+  revalidatePath("/app/case");
+  revalidatePath("/app/completed");
   return ok(result.data);
 }
 
@@ -119,6 +156,58 @@ export async function markCallClickedAction(
     return fail("NOT_FOUND", result.error);
   }
   return ok(result.data);
+}
+
+/** One history row, opened by the employee who closed it. Phone stays off the list. */
+export async function openCompletedCaseAction(caseId: string): Promise<
+  ActionResult<{
+    id: string;
+    closedAt: string | null;
+    outcome: CallOutcome | null;
+    rating: number | null;
+    remarks: string | null;
+    leadId: string;
+    phone: string;
+    name: string | null;
+    joined: boolean;
+    friends: {
+      id: string;
+      name: string | null;
+      designation: string | null;
+      experienceText: string | null;
+    }[];
+  }>
+> {
+  const gate = await requireEmployee();
+  if (isActionResult(gate)) return authFail(gate);
+
+  const parsed = z.object({ caseId: z.string().min(1) }).safeParse({ caseId });
+  if (!parsed.success) {
+    return fail("VALIDATION", "caseId is required");
+  }
+
+  const row = await getCompletedCaseDetail(gate.id, parsed.data.caseId);
+  if (!row) {
+    return fail("NOT_FOUND", "That case is not in your history");
+  }
+
+  return ok({
+    id: row.id,
+    closedAt: row.closedAt?.toISOString() ?? null,
+    outcome: row.outcome,
+    rating: row.rating,
+    remarks: row.remarks,
+    leadId: row.lead.id,
+    phone: row.lead.phone,
+    name: row.lead.name,
+    joined: row.lead.joined,
+    friends: row.referrals.map((r) => ({
+      id: r.id,
+      name: r.name,
+      designation: r.designation,
+      experienceText: r.experienceText,
+    })),
+  });
 }
 
 /** Employee: toggle Joined on a lead they closed. */

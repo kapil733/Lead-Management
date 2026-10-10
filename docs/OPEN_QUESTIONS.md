@@ -40,7 +40,7 @@ Anything ambiguous. Prefer the most conservative default until answered. Never s
 | OQ-039 | OVERTIME_PAY in ESIC wages? | Include OT adjustment in ESIC wage base (PAYROLL_RULES mentions OT if flagged) | Assumed |
 | OQ-040 | Unlock deletes PayrollLines? | Keep lines; DRAFT can Recalculate to replace; locked lines immutable while LOCKED | Assumed |
 | OQ-041 | WORKING_DAYS divisor holiday count | Global holidays in month (not per-employee OUT_OF_RANGE filtered) | Assumed |
-| OQ-042 | Payslip company legal name / logo | Hardcoded “TechConnect Ops” on PDF until branding settings exist | Assumed |
+| OQ-042 | Payslip company legal name / logo | Hardcoded “EVerified” on PDF until branding settings exist | Assumed |
 | OQ-043 | CI runs Playwright e2e? | Phase 10 CI = typecheck/lint/vitest only; e2e local/`pnpm test:e2e` (needs longer Next boot) | Assumed |
 | OQ-044 | WCAG full audit tooling | Manual landmarks/skip-link/aria-current in Phase 10; axe CI optional later | Assumed |
 | OQ-034 | Default salary component split when adding structure | 50% Basic / 25% HRA / rest Special (matches seed); editable split UI later | Assumed |

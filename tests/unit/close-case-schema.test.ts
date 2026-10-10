@@ -20,6 +20,22 @@ describe("closeCaseSchema", () => {
     expect(good.success).toBe(true);
   });
 
+  it("requires a remark for reconnect", () => {
+    const bad = closeCaseSchema.safeParse({
+      caseId: "c1",
+      outcome: CallOutcome.CALL_BACK_LATER,
+      remarks: "ok",
+    });
+    expect(bad.success).toBe(false);
+
+    const good = closeCaseSchema.safeParse({
+      caseId: "c1",
+      outcome: CallOutcome.CALL_BACK_LATER,
+      remarks: "Asked to call after 6pm",
+    });
+    expect(good.success).toBe(true);
+  });
+
   it("allows optional remarks for NO_ANSWER", () => {
     const ok = closeCaseSchema.safeParse({
       caseId: "c1",

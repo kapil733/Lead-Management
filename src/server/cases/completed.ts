@@ -71,21 +71,11 @@ export async function listCompletedCasesForEmployee(
         lead: {
           select: {
             id: true,
-            phone: true,
             name: true,
             joined: true,
           },
         },
         _count: { select: { referrals: true } },
-        referrals: {
-          select: {
-            id: true,
-            phone: true,
-            name: true,
-            experienceText: true,
-            designation: true,
-          },
-        },
       },
     }),
   ]);
@@ -103,10 +93,8 @@ export async function listCompletedCasesForEmployee(
       durationSeconds: r.durationSeconds,
       friendsCount: r._count.referrals,
       leadId: r.lead.id,
-      phone: r.lead.phone,
       name: r.lead.name,
       joined: r.lead.joined,
-      referrals: r.referrals,
     })),
   };
 }
@@ -136,6 +124,10 @@ export async function getCompletedCaseDetail(
           name: true,
           city: true,
           trade: true,
+          experienceYears: true,
+          extra: true,
+          source: true,
+          attempts: true,
           joined: true,
         },
       },
