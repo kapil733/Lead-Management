@@ -1,0 +1,10 @@
+---
+description: UI consistency
+globs: src/**/*.tsx
+alwaysApply: false
+---
+- Use design tokens from tailwind config / globals.css (see docs/UI_SPEC.md). No hardcoded hex colours in components.
+- Every data view has: loading skeleton, empty state (icon + message + action), error state with retry.
+- Every interactive element has hover, focus-visible, disabled states. Min touch target 44px on employee pages.
+- Employee pages are mobile-first. Admin pages are desktop-first but must not break at 1024px.
+- Use shadcn/ui primitives. Do not hand-roll dialogs, dropdowns, or context menus.

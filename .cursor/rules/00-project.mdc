@@ -1,0 +1,9 @@
+---
+description: Project-wide conventions
+alwaysApply: true
+---
+- Stack: Next.js App Router, TypeScript strict, Tailwind, shadcn/ui, Prisma, Postgres, Auth.js, zod. Do not introduce other frameworks/libs without adding a line to docs/DECISIONS.md.
+- Business logic lives in src/server/**. React components never import prisma.
+- Server actions return { ok, data | error }. Validate every input with zod.
+- Money = integer paise via src/lib/money.ts. Attendance dates = DATE (no time). Phones = 10-digit normalised.
+- Read docs/PRODUCT.md and docs/TASKS.md at the start of every task. Update TASKS.md at the end.

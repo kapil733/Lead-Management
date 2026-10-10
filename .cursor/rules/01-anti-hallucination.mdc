@@ -1,0 +1,9 @@
+---
+description: Prevent invented APIs, packages, and business rules
+alwaysApply: true
+---
+- Before using any library API, check the installed version (package.json) and its types/docs. Do not rely on memory.
+- Never invent statutory rates, labels, fields, or flows. If unspecified: write to docs/OPEN_QUESTIONS.md and use the safest default.
+- Do not leave stub buttons or fake data in UI outside seed/demo data.
+- If a command fails, read the error and fix the cause. Do not disable lint/type checks or add ts-ignore to pass.
+- Never claim something works without running typecheck, lint, tests, and (for UI) describing how it was verified.

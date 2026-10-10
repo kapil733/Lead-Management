@@ -1,0 +1,83 @@
+{
+  "name": "techconnect-ops",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --port 3010",
+    "build": "next build",
+    "start": "next start --port 3010",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:seed": "tsx prisma/seed.ts",
+    "db:reset": "prisma migrate reset --force",
+    "postinstall": "prisma generate"
+  },
+  "dependencies": {
+    "@hookform/resolvers": "5.2.2",
+    "@prisma/client": "6.19.3",
+    "@radix-ui/react-avatar": "^1.1.10",
+    "@radix-ui/react-dialog": "1.1.15",
+    "@radix-ui/react-dropdown-menu": "^2.1.16",
+    "@radix-ui/react-label": "^2.1.7",
+    "@radix-ui/react-slot": "^1.2.3",
+    "@radix-ui/react-switch": "1.2.6",
+    "@react-pdf/renderer": "4.9.0",
+    "@vercel/blob": "2.8.1",
+    "bcryptjs": "3.0.2",
+    "class-variance-authority": "0.7.1",
+    "clsx": "2.1.1",
+    "date-fns": "4.1.0",
+    "date-fns-tz": "3.2.0",
+    "dotenv": "16.4.7",
+    "exceljs": "4.4.0",
+    "jszip": "3.10.1",
+    "lucide-react": "0.562.0",
+    "next": "16.4.0",
+    "next-auth": "5.0.0-beta.32",
+    "nuqs": "2.8.1",
+    "papaparse": "5.7.0",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "react-hook-form": "7.89.0",
+    "recharts": "2.15.4",
+    "server-only": "0.0.1",
+    "sonner": "2.0.8",
+    "tailwind-merge": "3.7.0",
+    "zod": "4.6.5"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.56.1",
+    "@tailwindcss/turbopack": "^4",
+    "@types/bcryptjs": "2.4.6",
+    "@types/node": "20.19.43",
+    "@types/papaparse": "5.5.2",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@vitejs/plugin-react": "4.7.0",
+    "eslint": "^9",
+    "eslint-config-next": "16.4.0",
+    "prettier": "3.6.2",
+    "prisma": "6.19.3",
+    "tailwindcss": "^4",
+    "tsx": "4.20.5",
+    "typescript": "^5",
+    "vitest": "3.2.4"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@prisma/client",
+      "@prisma/engines",
+      "esbuild",
+      "prisma"
+    ]
+  },
+  "packageManager": "pnpm@10.28.1"
+}

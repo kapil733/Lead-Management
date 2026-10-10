@@ -1,0 +1,383 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  EMPLOYEE
+}
+
+enum LeadSource {
+  IMPORT
+  REFERRAL
+  MANUAL
+}
+
+enum LeadStatus {
+  NEW
+  IN_CASE
+  CLOSED
+  EXHAUSTED
+}
+
+enum CaseStatus {
+  OPEN
+  CLOSED
+  RELEASED
+}
+
+enum CallOutcome {
+  CONNECTED
+  NO_ANSWER
+  SWITCHED_OFF
+  WRONG_NUMBER
+  CALL_BACK_LATER
+}
+
+enum ContractEmployeeStatus {
+  ACTIVE
+  INACTIVE
+  EXITED
+}
+
+enum DocumentType {
+  AADHAAR
+  PAN
+  PHOTO
+  BANK_PROOF
+  OFFER
+  OTHER
+}
+
+enum AttendanceStatus {
+  PRESENT
+  HALF_DAY
+  ABSENT
+  PAID_LEAVE
+  WEEKLY_OFF
+  HOLIDAY_WORKED
+}
+
+enum AdjustmentType {
+  BONUS
+  OVERTIME_PAY
+  OTHER_EARNING
+  ADVANCE_DEDUCTION
+  OTHER_DEDUCTION
+}
+
+enum DayDivisor {
+  CALENDAR_DAYS
+  FIXED_30
+  WORKING_DAYS
+}
+
+enum PayrollRunStatus {
+  DRAFT
+  LOCKED
+}
+
+model User {
+  id                 String    @id @default(cuid())
+  email              String    @unique
+  name               String
+  passwordHash       String
+  role               Role
+  isActive           Boolean   @default(true)
+  mustChangePassword Boolean   @default(true)
+  lastLoginAt        DateTime?
+  createdAt          DateTime  @default(now())
+
+  importBatches      ImportBatch[]       @relation("ImportUploadedBy")
+  cases              Case[]              @relation("CaseEmployee")
+  releasedCases      Case[]              @relation("CaseReleasedBy")
+  joinedLeads        Lead[]              @relation("LeadJoinedBy")
+  auditLogs          AuditLog[]          @relation("AuditActor")
+  salaryStructures   SalaryStructure[]   @relation("SalaryCreatedBy")
+  attendanceUpdates  AttendanceRecord[]  @relation("AttendanceUpdatedBy")
+  lockedPayrollRuns  PayrollRun[]        @relation("PayrollLockedBy")
+}
+
+model ImportBatch {
+  id           String    @id @default(cuid())
+  fileName     String
+  uploadedById String
+  uploadedBy   User      @relation("ImportUploadedBy", fields: [uploadedById], references: [id])
+  totalRows    Int
+  imported     Int
+  duplicates   Int
+  invalid      Int
+  createdAt    DateTime  @default(now())
+  revertedAt   DateTime?
+  leads        Lead[]
+}
+
+model Lead {
+  id               String     @id @default(cuid())
+  phone            String     @unique
+  name             String?
+  city             String?
+  trade            String?
+  experienceYears  Decimal?   @db.Decimal(4, 1)
+  source           LeadSource
+  referredByLeadId String?
+  referredBy       Lead?      @relation("LeadReferrals", fields: [referredByLeadId], references: [id])
+  referralsGiven   Lead[]     @relation("LeadReferrals")
+  importBatchId    String?
+  importBatch      ImportBatch? @relation(fields: [importBatchId], references: [id])
+  extra            Json?
+  status           LeadStatus @default(NEW)
+  attempts         Int        @default(0)
+  nextEligibleAt   DateTime?
+  priority         Int        @default(0)
+  joined           Boolean    @default(false)
+  joinedAt         DateTime?
+  joinedMarkedById String?
+  joinedMarkedBy   User?      @relation("LeadJoinedBy", fields: [joinedMarkedById], references: [id])
+  createdAt        DateTime   @default(now())
+  cases            Case[]
+  referralLinks    Referral[]
+
+  @@index([status, priority, nextEligibleAt, createdAt])
+  @@index([importBatchId])
+  @@index([referredByLeadId])
+}
+
+model Case {
+  id              String       @id @default(cuid())
+  leadId          String
+  lead            Lead         @relation(fields: [leadId], references: [id])
+  employeeId      String
+  employee        User         @relation("CaseEmployee", fields: [employeeId], references: [id])
+  status          CaseStatus   @default(OPEN)
+  startedAt       DateTime     @default(now())
+  callClickedAt   DateTime?
+  closedAt        DateTime?
+  outcome         CallOutcome?
+  rating          Int?
+  remarks         String?
+  durationSeconds Int?
+  releasedById    String?
+  releasedBy      User?        @relation("CaseReleasedBy", fields: [releasedById], references: [id])
+  releaseReason   String?
+  referrals       Referral[]
+
+  @@index([employeeId, status, closedAt])
+  @@index([leadId, status])
+  @@index([status, startedAt])
+}
+
+model Referral {
+  id             String   @id @default(cuid())
+  caseId         String
+  case           Case     @relation(fields: [caseId], references: [id])
+  leadId         String
+  lead           Lead     @relation(fields: [leadId], references: [id])
+  phone          String
+  name           String?
+  experienceText String?
+  designation    String?
+  createdAt      DateTime @default(now())
+
+  @@index([caseId])
+  @@index([leadId])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String?
+  actor      User?    @relation("AuditActor", fields: [actorId], references: [id])
+  action     String
+  entityType String
+  entityId   String
+  meta       Json?
+  ip         String?
+  createdAt  DateTime @default(now())
+
+  @@index([action, createdAt])
+  @@index([entityType, entityId])
+  @@index([actorId, createdAt])
+}
+
+model AppSetting {
+  key   String @id
+  value Json
+}
+
+model Client {
+  id            String             @id @default(cuid())
+  name          String
+  contactName   String?
+  contactPhone  String?
+  address       String?
+  isActive      Boolean            @default(true)
+  employees     ContractEmployee[]
+}
+
+model ContractEmployee {
+  id                     String                 @id @default(cuid())
+  employeeCode           String                 @unique
+  fullName               String
+  fatherName             String?
+  gender                 String
+  dob                    DateTime               @db.Date
+  mobile                 String
+  email                  String?
+  addressLine            String
+  city                   String
+  state                  String
+  pincode                String
+  designation            String
+  department             String?
+  clientId               String?
+  client                 Client?                @relation(fields: [clientId], references: [id])
+  deploymentSite         String?
+  dateOfJoining          DateTime               @db.Date
+  dateOfExit             DateTime?              @db.Date
+  status                 ContractEmployeeStatus @default(ACTIVE)
+  weeklyOffDays          Int[]                  @default([0])
+  aadhaarEnc             String?
+  aadhaarLast4           String?
+  panEnc                 String?
+  pan4                   String?
+  uan                    String?
+  pfApplicable           Boolean                @default(true)
+  pfOnActualWage         Boolean                @default(false)
+  esicApplicable         Boolean                @default(true)
+  esicIpNumber           String?
+  bankName               String?
+  accountHolder          String?
+  accountNumberEnc       String?
+  accountLast4           String?
+  ifsc                   String?
+  emergencyContactName   String?
+  emergencyContactPhone  String?
+  nomineeName            String?
+  nomineeRelation        String?
+  notes                  String?
+  documents              EmployeeDocument[]
+  salaryStructures       SalaryStructure[]
+  attendanceRecords      AttendanceRecord[]
+  adjustments            PayrollAdjustment[]
+  payrollLines           PayrollLine[]
+
+  @@index([clientId, status])
+  @@index([status])
+}
+
+model EmployeeDocument {
+  id         String           @id @default(cuid())
+  employeeId String
+  employee   ContractEmployee @relation(fields: [employeeId], references: [id])
+  type       DocumentType
+  blobUrl    String
+  fileName   String
+  uploadedAt DateTime         @default(now())
+
+  @@index([employeeId])
+}
+
+model SalaryStructure {
+  id                String           @id @default(cuid())
+  employeeId        String
+  employee          ContractEmployee @relation(fields: [employeeId], references: [id])
+  effectiveFrom     DateTime         @db.Date
+  monthlyGrossPaise Int
+  components        Json
+  note              String?
+  createdById       String
+  createdBy         User             @relation("SalaryCreatedBy", fields: [createdById], references: [id])
+
+  @@index([employeeId, effectiveFrom])
+}
+
+model AttendanceRecord {
+  id            String           @id @default(cuid())
+  employeeId    String
+  employee      ContractEmployee @relation(fields: [employeeId], references: [id])
+  date          DateTime         @db.Date
+  status        AttendanceStatus
+  overtimeHours Decimal?         @db.Decimal(4, 2)
+  note          String?
+  updatedById   String
+  updatedBy     User             @relation("AttendanceUpdatedBy", fields: [updatedById], references: [id])
+  updatedAt     DateTime         @updatedAt
+
+  @@unique([employeeId, date])
+  @@index([date])
+}
+
+model Holiday {
+  id     String   @id @default(cuid())
+  date   DateTime @unique @db.Date
+  name   String
+  isPaid Boolean  @default(true)
+}
+
+model PayrollAdjustment {
+  id         String           @id @default(cuid())
+  employeeId String
+  employee   ContractEmployee @relation(fields: [employeeId], references: [id])
+  month      String
+  type       AdjustmentType
+  amountPaise Int
+  note       String?
+
+  @@index([employeeId, month])
+}
+
+model StatutoryConfig {
+  id                   String     @id @default(cuid())
+  effectiveFrom        DateTime   @db.Date
+  pfEmployeeRate       Decimal    @db.Decimal(6, 4)
+  pfEmployerEpsRate    Decimal    @db.Decimal(6, 4)
+  pfEmployerEpfRate    Decimal    @db.Decimal(6, 4)
+  pfWageCeilingPaise   Int
+  edliRate             Decimal    @db.Decimal(6, 4)
+  pfAdminRate          Decimal    @db.Decimal(6, 4)
+  esicEmployeeRate     Decimal    @db.Decimal(6, 4)
+  esicEmployerRate     Decimal    @db.Decimal(6, 4)
+  esicWageCeilingPaise Int
+  dayDivisor           DayDivisor
+
+  @@index([effectiveFrom])
+}
+
+model PayrollRun {
+  id         String           @id @default(cuid())
+  month      String           @unique
+  status     PayrollRunStatus @default(DRAFT)
+  lockedAt   DateTime?
+  lockedById String?
+  lockedBy   User?            @relation("PayrollLockedBy", fields: [lockedById], references: [id])
+  createdAt  DateTime         @default(now())
+  lines      PayrollLine[]
+}
+
+model PayrollLine {
+  id                   String           @id @default(cuid())
+  runId                String
+  run                  PayrollRun       @relation(fields: [runId], references: [id])
+  employeeId           String
+  employee             ContractEmployee @relation(fields: [employeeId], references: [id])
+  snapshot             Json
+  payableDays          Decimal          @db.Decimal(5, 2)
+  earnedGrossPaise     Int
+  pfEmployeePaise      Int
+  esicEmployeePaise    Int
+  otherDeductionsPaise Int
+  otherEarningsPaise   Int
+  netPayPaise          Int
+  employerPfPaise      Int
+  employerEsicPaise    Int
+  employerEdliPaise    Int
+  employerAdminPaise   Int
+
+  @@unique([runId, employeeId])
+  @@index([employeeId])
+}

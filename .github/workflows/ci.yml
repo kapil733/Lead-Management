@@ -1,0 +1,64 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: techconnect
+          POSTGRES_PASSWORD: techconnect
+          POSTGRES_DB: techconnect
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U techconnect -d techconnect"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://techconnect:techconnect@localhost:5432/techconnect?schema=public
+      AUTH_SECRET: ci-test-secret-at-least-16-chars
+      AUTH_URL: http://localhost:3010
+      FIELD_ENCRYPTION_KEY: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+      SEED_DEMO: "true"
+      NODE_ENV: test
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Migrate + seed
+        run: |
+          pnpm exec prisma migrate deploy
+          SEED_DEMO=true pnpm db:seed
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Unit + integration tests
+        run: pnpm test
+
+      - name: Audit (non-blocking high+)
+        run: pnpm audit --audit-level=high || true

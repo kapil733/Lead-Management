@@ -1,0 +1,10 @@
+---
+description: Anti-leak rules for lead data
+globs: src/server/leads/**,src/server/cases/**,src/app/(employee)/**
+alwaysApply: false
+---
+- EMPLOYEE role must NEVER be able to query leads in bulk. No endpoint, server action, or RSC may return more than the employee's own active case lead and her own completed cases.
+- Claiming a lead uses a single DB transaction with SELECT ... FOR UPDATE SKIP LOCKED. One OPEN case per employee, one OPEN case per lead (partial unique indexes).
+- employeeId always from session. No export/download/CSV for EMPLOYEE role anywhere.
+- Every claim, close, release, joined-toggle writes an AuditLog row.
+- Do not log full phone numbers to console or error trackers.

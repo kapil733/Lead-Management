@@ -1,0 +1,10 @@
+---
+description: Payroll correctness
+globs: src/server/payroll/**,src/components/attendance/**,tests/unit/payroll/**
+alwaysApply: false
+---
+- All payroll math is in pure functions in src/server/payroll/calc/*.ts with Vitest tests derived from docs/PAYROLL_RULES.md.
+- Statutory rates/ceilings come from the effective-dated StatutoryConfig table, never hardcoded in calc code.
+- Store only EXPLICIT attendance marks. Effective status per day is computed by resolveDayStatus(). Explicit mark > holiday > weekly off.
+- A LOCKED payroll month is read-only everywhere (UI and server). Unlock is admin-only and audit-logged.
+- Rounding rules live in one file (rounding.ts). PF: round half up to nearest rupee. ESIC: round UP to next rupee.

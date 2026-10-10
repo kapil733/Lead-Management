@@ -1,0 +1,9 @@
+---
+description: Prisma and migrations
+globs: prisma/**,src/server/**
+alwaysApply: false
+---
+- Schema changes only via prisma migrate. Raw SQL (partial unique indexes) goes into the migration file.
+- Add indexes for every filter/sort column used in lists and analytics.
+- Use transactions for multi-step writes. Use select, never fetch whole rows needlessly.
+- Seed script must be idempotent and run only when SEED_DEMO=true or NODE_ENV != production.

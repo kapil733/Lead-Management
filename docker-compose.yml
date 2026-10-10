@@ -1,0 +1,23 @@
+# Local Postgres for TechConnect Ops development.
+# Usage: docker compose up -d
+# DATABASE_URL=postgresql://techconnect:techconnect@localhost:5436/techconnect?schema=public
+
+services:
+  db:
+    image: postgres:16-alpine
+    ports:
+      - "5436:5432"
+    environment:
+      POSTGRES_USER: techconnect
+      POSTGRES_PASSWORD: techconnect
+      POSTGRES_DB: techconnect
+    volumes:
+      - tc_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U techconnect -d techconnect"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  tc_pgdata:
