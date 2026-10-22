@@ -95,6 +95,10 @@ A sheet with one table per city (title row, then the same header repeated) can b
 
 Employee history no longer lists phone numbers. Opening one history row loads that lead's number and saved remark. Reconnect requires a remark of at least 3 characters; those remarks show on the next open of the same lead. Reconnect history rows have Open, which starts that call again on the case desk with Close case. The app name is EVerified and the accent is `#12A56E`.
 
+## Calling desk and ECR (2026-10-21)
+
+The open case lets the telecaller edit city, type a location, and choose whether the lead is a petrol bike technician or an EV bike technician. Those values save on that lead when the case closes. Payroll runs download an EPFO ECR 2.0 `.txt` file (`kind=ecr`) built from each PF-applicable line. Employees without a 12-digit UAN are named on the run page and left out of the file.
+
 ## All phases complete
 
 No further phased build work in the master checklist. Follow-ups (Redis rate limits, employee Excel import wizard, branding settings) are tracked in `docs/OPEN_QUESTIONS.md`.

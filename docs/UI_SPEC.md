@@ -104,6 +104,7 @@ Desktop: two columns (40% lead card / 60% outcome form). Mobile: stacked + stick
 - Outcome chips single-select. Connected requires rating and remarks. Reconnect (`CALL_BACK_LATER`) requires remarks, which are shown the next time that lead is opened. Other outcomes: remarks optional.
 - Rating: six large buttons (min 56px); captions: `0–1 Not interested…`, `2 Maybe later`, `3 Interested`, `4 Keen to join`, `5 Will join and bring friends`. Keys `0`–`5` on desktop.
 - Friends rows optional; designation suggestions listed in PRODUCT flows.
+- City (editable text, prefilled), location (free text), and technician (Petrol bike technician or EV bike technician, blank allowed) sit on the lead card. They are saved on that lead when the case closes, and ride along in the case draft. Clearing city or location stores null. They are not required to close.
 - Draft autosave to `localStorage` by case id every 2s.
 - Close → confirm sheet → success screen (no auto-claim).
 - No OPEN case → redirect `/app`.
@@ -162,7 +163,7 @@ Year list CRUD.
 
 ### `/admin/payroll/runs`
 
-Month list; detail table; Recalculate; exports (register, PF, ESIC summaries); payslip zip; Lock.
+Month list; detail table; Recalculate; exports (register, PF summary, ECR challan `.txt`, ESIC summary); payslip zip; Lock. The ECR file is the EPFO upload for that wage month. PF-applicable employees with a missing or non-12-digit UAN are named on the run page and left out of the file.
 
 ### `/admin/payroll/settings`
 

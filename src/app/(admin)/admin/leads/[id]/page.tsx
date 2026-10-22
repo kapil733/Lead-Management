@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
+import { bikeTypeLabel } from "@/lib/validators/cases";
 
 export default async function LeadDetailPage({
   params,
@@ -61,6 +62,8 @@ export default async function LeadDetailPage({
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <Field label="City" value={lead.city} />
+          <Field label="Location" value={lead.location} />
+          <Field label="Technician" value={bikeTypeLabel(lead.bikeType)} />
           <Field label="Trade" value={lead.trade} />
           <Field
             label="Experience"

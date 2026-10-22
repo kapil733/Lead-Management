@@ -1,6 +1,19 @@
 import { z } from "zod";
 import { CallOutcome } from "@prisma/client";
 
+export const BIKE_TYPE_OPTIONS = [
+  { value: "PETROL_BIKE", label: "Petrol bike technician" },
+  { value: "EV_BIKE", label: "EV bike technician" },
+] as const;
+
+export const bikeTypeSchema = z.enum(["PETROL_BIKE", "EV_BIKE"]);
+
+export type BikeTypeValue = z.infer<typeof bikeTypeSchema>;
+
+export function bikeTypeLabel(value: string | null | undefined): string | null {
+  return BIKE_TYPE_OPTIONS.find((option) => option.value === value)?.label ?? null;
+}
+
 export const DESIGNATION_SUGGESTIONS = [
   "EV Technician",
   "Electrician",
@@ -39,6 +52,10 @@ export const closeCaseSchema = z
     rating: z.number().int().min(0).max(5).optional().nullable(),
     remarks: z.string().trim().optional().default(""),
     referrals: z.array(referralRowSchema).default([]),
+    /** Omitted fields are left unchanged. Empty string clears city or location. */
+    city: z.string().trim().max(80).optional(),
+    location: z.string().trim().max(120).optional(),
+    bikeType: z.union([bikeTypeSchema, z.literal("")]).optional(),
   })
   .superRefine((data, ctx) => {
     if (data.outcome === CallOutcome.CONNECTED) {

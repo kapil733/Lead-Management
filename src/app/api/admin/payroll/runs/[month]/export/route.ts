@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireAdminApi } from "@/server/leads/http";
 import {
+  exportEcrTxt,
   exportEsicSummaryXlsx,
   exportPayrollRegisterXlsx,
   exportPayslipsZip,
@@ -9,7 +10,7 @@ import {
 
 export const runtime = "nodejs";
 
-type Kind = "register" | "pf" | "esic" | "payslips";
+type Kind = "register" | "pf" | "esic" | "payslips" | "ecr";
 
 export async function GET(
   req: Request,
@@ -36,6 +37,16 @@ export async function GET(
         headers: {
           "Content-Type": "application/zip",
           "Content-Disposition": `attachment; filename="payslips-${month}.zip"`,
+        },
+      });
+    }
+
+    if (kind === "ecr") {
+      const buf = await exportEcrTxt(month);
+      return new NextResponse(new Uint8Array(buf), {
+        headers: {
+          "Content-Type": "text/plain; charset=utf-8",
+          "Content-Disposition": `attachment; filename="ecr-${month}.txt"`,
         },
       });
     }

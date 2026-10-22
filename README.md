@@ -84,7 +84,7 @@ Validated at boot in `src/env.ts`.
    - `AUTH_URL` = your Vercel URL (or custom domain)
    - `FIELD_ENCRYPTION_KEY` (generate once; rotating re-encrypts KYC — plan carefully)
    - Optional: `BLOB_READ_WRITE_TOKEN` for payroll document storage
-4. **Migrations** — run against Neon before/after first deploy:
+4. **Migrations** — the Vercel build runs `prisma migrate deploy` before `next build`. For a database that is not the Vercel `DATABASE_URL`, apply the same command yourself:
 
    ```bash
    DATABASE_URL="…" pnpm exec prisma migrate deploy

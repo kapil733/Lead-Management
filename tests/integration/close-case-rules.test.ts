@@ -81,7 +81,19 @@ describe("close case rules §6.1", () => {
     });
     await prisma.case.deleteMany({ where: { employeeId } });
     await prisma.lead.deleteMany({
-      where: { phone: { in: [...Object.values(phones), "9622222210", "9622222211", "9622222212"] } },
+      where: {
+        phone: {
+          in: [
+            ...Object.values(phones),
+            "9622222210",
+            "9622222211",
+            "9622222212",
+            "9622222230",
+            "9622222231",
+            "9622222232",
+          ],
+        },
+      },
     });
     await prisma.$disconnect();
   });
@@ -243,5 +255,103 @@ describe("close case rules §6.1", () => {
 
     await clearEmployeeCases();
     await prisma.lead.delete({ where: { phone } });
+  });
+
+  it("saves city, location, and bike on the open lead only", async () => {
+    const phone = "9622222230";
+    const other = "9622222231";
+    await clearEmployeeCases();
+    await prisma.lead.deleteMany({ where: { phone: { in: [phone, other] } } });
+    await prisma.lead.create({
+      data: {
+        phone,
+        name: "Desk Lead",
+        city: "Chennai",
+        source: LeadSource.MANUAL,
+        status: LeadStatus.NEW,
+        priority: 1_000_000,
+      },
+    });
+    await prisma.lead.create({
+      data: {
+        phone: other,
+        name: "Other Lead",
+        city: "Pune",
+        source: LeadSource.MANUAL,
+        status: LeadStatus.NEW,
+        priority: 1,
+      },
+    });
+
+    const claim = await claimNextCase({ employeeId });
+    expect(claim.ok).toBe(true);
+    if (!claim.ok) return;
+
+    const open = await prisma.case.findUnique({
+      where: { id: claim.data.caseId },
+      select: { lead: { select: { phone: true } } },
+    });
+    expect(open?.lead.phone).toBe(phone);
+
+    const closed = await closeCase({
+      employeeId,
+      payload: {
+        caseId: claim.data.caseId,
+        outcome: CallOutcome.NO_ANSWER,
+        city: "Madurai",
+        location: "T Nagar",
+        bikeType: "EV_BIKE",
+      },
+    });
+    expect(closed.ok).toBe(true);
+
+    const saved = await prisma.lead.findUnique({ where: { phone } });
+    expect(saved?.city).toBe("Madurai");
+    expect(saved?.location).toBe("T Nagar");
+    expect(saved?.bikeType).toBe("EV_BIKE");
+
+    const untouched = await prisma.lead.findUnique({ where: { phone: other } });
+    expect(untouched?.city).toBe("Pune");
+    expect(untouched?.location).toBeNull();
+    expect(untouched?.bikeType).toBeNull();
+  });
+
+  it("clears city, location, and bike when the desk sends blanks", async () => {
+    const phone = "9622222232";
+    await clearEmployeeCases();
+    await prisma.lead.deleteMany({ where: { phone } });
+    await prisma.lead.create({
+      data: {
+        phone,
+        name: "Clear Lead",
+        city: "Chennai",
+        location: "Anna Nagar",
+        bikeType: "PETROL_BIKE",
+        source: LeadSource.MANUAL,
+        status: LeadStatus.NEW,
+        priority: 1_000_000,
+      },
+    });
+
+    const claim = await claimNextCase({ employeeId });
+    expect(claim.ok).toBe(true);
+    if (!claim.ok) return;
+
+    const closed = await closeCase({
+      employeeId,
+      payload: {
+        caseId: claim.data.caseId,
+        outcome: CallOutcome.NO_ANSWER,
+        city: "",
+        location: "",
+        bikeType: "",
+      },
+    });
+    expect(closed.ok).toBe(true);
+
+    const saved = await prisma.lead.findUnique({ where: { phone } });
+    expect(saved?.city).toBeNull();
+    expect(saved?.location).toBeNull();
+    expect(saved?.bikeType).toBeNull();
   });
 });

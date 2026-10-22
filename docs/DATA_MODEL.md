@@ -10,6 +10,7 @@ enum LeadSource { IMPORT REFERRAL MANUAL }
 enum LeadStatus { NEW IN_CASE CLOSED EXHAUSTED }       // EXHAUSTED = max attempts reached
 enum CaseStatus { OPEN CLOSED RELEASED }
 enum CallOutcome { CONNECTED NO_ANSWER SWITCHED_OFF WRONG_NUMBER CALL_BACK_LATER }
+enum BikeType { PETROL_BIKE EV_BIKE }
 ```
 
 ## Core auth & CRM
@@ -44,6 +45,8 @@ model Lead {
   phone String @unique              // 10-digit normalised
   name String?
   city String?
+  location String?                  // area / site, edited on the calling desk
+  bikeType BikeType?                // petrol bike technician | EV bike technician, edited on the calling desk
   trade String?                     // e.g. EV Technician, Electrician
   experienceYears Decimal?
   source LeadSource

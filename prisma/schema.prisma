@@ -25,6 +25,11 @@ enum LeadStatus {
   EXHAUSTED
 }
 
+enum BikeType {
+  PETROL_BIKE
+  EV_BIKE
+}
+
 enum CaseStatus {
   OPEN
   CLOSED
@@ -122,6 +127,8 @@ model Lead {
   phone            String     @unique
   name             String?
   city             String?
+  location         String?
+  bikeType         BikeType?
   trade            String?
   experienceYears  Decimal?   @db.Decimal(4, 1)
   source           LeadSource

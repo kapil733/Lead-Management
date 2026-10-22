@@ -17,6 +17,7 @@ import type {
   AdjustmentInput,
   SalaryComponent,
 } from "@/server/payroll/calc/types";
+import { buildEcrFile } from "@/server/payroll/calc/ecr";
 import { getEffectiveStatutoryConfig } from "@/server/payroll/statutory";
 
 function parseComponents(raw: unknown): SalaryComponent[] {
@@ -70,6 +71,7 @@ export async function getPayrollRunDetail(month: string) {
           id: true,
           employeeCode: true,
           fullName: true,
+          uan: true,
           client: { select: { name: true } },
         },
       },
@@ -96,32 +98,46 @@ export async function getPayrollRunDetail(month: string) {
     },
   );
 
+  const mapped = lines.map((l) => ({
+    id: l.id,
+    employeeId: l.employeeId,
+    employeeCode: l.employee.employeeCode,
+    fullName: l.employee.fullName,
+    uan: l.employee.uan,
+    clientName: l.employee.client?.name ?? null,
+    payableDays: Number(l.payableDays),
+    earnedGrossPaise: l.earnedGrossPaise,
+    pfEmployeePaise: l.pfEmployeePaise,
+    esicEmployeePaise: l.esicEmployeePaise,
+    otherEarningsPaise: l.otherEarningsPaise,
+    otherDeductionsPaise: l.otherDeductionsPaise,
+    netPayPaise: l.netPayPaise,
+    employerPfPaise: l.employerPfPaise,
+    employerEsicPaise: l.employerEsicPaise,
+    employerEdliPaise: l.employerEdliPaise,
+    employerAdminPaise: l.employerAdminPaise,
+    snapshot: l.snapshot,
+  }));
+
+  const { year, month: monthNum } = parseMonthKey(month);
+  const dim = daysInMonth(year, monthNum);
+  const monthEnd = `${month}-${String(dim).padStart(2, "0")}`;
+  const config = await getEffectiveStatutoryConfig(monthEnd);
+  const ecr = buildEcrFile(
+    mapped,
+    dim,
+    config?.pfWageCeilingPaise ?? null,
+  );
+
   return {
     id: run.id,
     month: run.month,
     status: run.status,
     lockedAt: run.lockedAt?.toISOString() ?? null,
     lockedById: run.lockedById,
-    lines: lines.map((l) => ({
-      id: l.id,
-      employeeId: l.employeeId,
-      employeeCode: l.employee.employeeCode,
-      fullName: l.employee.fullName,
-      clientName: l.employee.client?.name ?? null,
-      payableDays: Number(l.payableDays),
-      earnedGrossPaise: l.earnedGrossPaise,
-      pfEmployeePaise: l.pfEmployeePaise,
-      esicEmployeePaise: l.esicEmployeePaise,
-      otherEarningsPaise: l.otherEarningsPaise,
-      otherDeductionsPaise: l.otherDeductionsPaise,
-      netPayPaise: l.netPayPaise,
-      employerPfPaise: l.employerPfPaise,
-      employerEsicPaise: l.employerEsicPaise,
-      employerEdliPaise: l.employerEdliPaise,
-      employerAdminPaise: l.employerAdminPaise,
-      snapshot: l.snapshot,
-    })),
+    lines: mapped,
     totals,
+    ecrSkipped: ecr.skipped,
   };
 }
 

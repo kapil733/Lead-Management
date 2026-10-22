@@ -3,7 +3,10 @@ import "server-only";
 import ExcelJS from "exceljs";
 import JSZip from "jszip";
 import { prisma } from "@/server/db";
+import { buildEcrFile } from "@/server/payroll/calc/ecr";
+import { daysInMonth, parseMonthKey } from "@/server/payroll/attendance/resolve";
 import { getPayrollRunDetail } from "@/server/payroll/runs";
+import { getEffectiveStatutoryConfig } from "@/server/payroll/statutory";
 import { renderPayslipPdf } from "@/server/payroll/payslip";
 import { fromPaise } from "@/lib/money";
 
@@ -72,6 +75,20 @@ export async function exportPfSummaryXlsx(month: string): Promise<Buffer> {
     ]);
   }
   return Buffer.from(await wb.xlsx.writeBuffer());
+}
+
+export async function exportEcrTxt(month: string): Promise<Buffer> {
+  const detail = await getPayrollRunDetail(month);
+  const { year, month: monthNum } = parseMonthKey(month);
+  const dim = daysInMonth(year, monthNum);
+  const monthEnd = `${month}-${String(dim).padStart(2, "0")}`;
+  const config = await getEffectiveStatutoryConfig(monthEnd);
+  const { text } = buildEcrFile(
+    detail.lines,
+    dim,
+    config?.pfWageCeilingPaise ?? null,
+  );
+  return Buffer.from(text, "utf8");
 }
 
 export async function exportEsicSummaryXlsx(month: string): Promise<Buffer> {

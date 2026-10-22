@@ -171,14 +171,25 @@ export async function closeCase(input: {
         },
       });
 
+      const leadData: Prisma.LeadUpdateInput = {
+        status: nextLeadStatus,
+        attempts: nextAttempts,
+        nextEligibleAt:
+          nextLeadStatus === LeadStatus.NEW ? nextEligibleAt : null,
+      };
+      if (data.city !== undefined) {
+        leadData.city = data.city.length > 0 ? data.city : null;
+      }
+      if (data.location !== undefined) {
+        leadData.location = data.location.length > 0 ? data.location : null;
+      }
+      if (data.bikeType !== undefined) {
+        leadData.bikeType = data.bikeType === "" ? null : data.bikeType;
+      }
+
       await tx.lead.update({
         where: { id: openCase.leadId },
-        data: {
-          status: nextLeadStatus,
-          attempts: nextAttempts,
-          nextEligibleAt:
-            nextLeadStatus === LeadStatus.NEW ? nextEligibleAt : null,
-        },
+        data: leadData,
       });
 
       let referralsSaved = 0;

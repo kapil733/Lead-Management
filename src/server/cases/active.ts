@@ -18,6 +18,8 @@ export async function getOpenCaseForEmployee(employeeId: string) {
           phone: true,
           name: true,
           city: true,
+          location: true,
+          bikeType: true,
           trade: true,
           experienceYears: true,
           extra: true,

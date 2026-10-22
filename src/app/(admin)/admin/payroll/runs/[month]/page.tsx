@@ -35,6 +35,7 @@ export default async function PayrollRunMonthPage({
         lines={detail.lines}
         totals={detail.totals}
         unmarkedHint={grid.unmarkedTotal}
+        ecrSkipped={detail.ecrSkipped}
       />
     </div>
   );

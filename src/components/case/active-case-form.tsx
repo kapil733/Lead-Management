@@ -38,7 +38,11 @@ import {
   friendPhoneError,
   normalisePhone,
 } from "@/lib/phone";
-import { DESIGNATION_SUGGESTIONS } from "@/lib/validators/cases";
+import {
+  BIKE_TYPE_OPTIONS,
+  DESIGNATION_SUGGESTIONS,
+  type BikeTypeValue,
+} from "@/lib/validators/cases";
 import { claimNextCaseAction, closeCaseAction } from "@/server/cases/actions";
 import { profileEntries } from "@/lib/lead-extra";
 import { outcomeLabel, type PriorRemark } from "@/lib/outcomes";
@@ -68,6 +72,10 @@ type DraftState = {
   rating: number | null;
   remarks: string;
   referrals: ReferralDraft[];
+  /** Absent until the telecaller edits or the draft is saved. */
+  city?: string;
+  location?: string;
+  bikeType?: BikeTypeValue | "";
 };
 
 type LeadInfo = {
@@ -75,6 +83,8 @@ type LeadInfo = {
   phone: string;
   name: string | null;
   city: string | null;
+  location: string | null;
+  bikeType: BikeTypeValue | null;
   trade: string | null;
   experienceYears: string | null;
   extra?: Record<string, string>;
@@ -112,11 +122,22 @@ function parseDraft(raw: string | null): DraftState {
   if (!raw) return EMPTY_DRAFT;
   try {
     const parsed = JSON.parse(raw) as DraftState;
+    const bikeType =
+      parsed.bikeType === "PETROL_BIKE" ||
+      parsed.bikeType === "EV_BIKE" ||
+      parsed.bikeType === ""
+        ? parsed.bikeType
+        : undefined;
     return {
       outcome: parsed.outcome ?? null,
       rating: parsed.rating ?? null,
       remarks: parsed.remarks ?? "",
       referrals: parsed.referrals ?? [],
+      ...(typeof parsed.city === "string" ? { city: parsed.city } : {}),
+      ...(typeof parsed.location === "string"
+        ? { location: parsed.location }
+        : {}),
+      ...(bikeType !== undefined ? { bikeType } : {}),
     };
   } catch {
     return EMPTY_DRAFT;
@@ -173,6 +194,11 @@ export function ActiveCaseForm({
   const rating = draft.rating;
   const remarks = draft.remarks;
   const referrals = draft.referrals;
+  const city = draft.city !== undefined ? draft.city : (lead.city ?? "");
+  const location =
+    draft.location !== undefined ? draft.location : (lead.location ?? "");
+  const bikeType =
+    draft.bikeType !== undefined ? draft.bikeType : (lead.bikeType ?? "");
 
   function patchDraft(patch: Partial<DraftState>) {
     setLocalDraft((prev) => ({ ...(prev ?? storedDraft), ...patch }));
@@ -202,11 +228,19 @@ export function ActiveCaseForm({
   // Autosave every 2s
   useEffect(() => {
     const id = window.setInterval(() => {
-      const payload: DraftState = { outcome, rating, remarks, referrals };
+      const payload: DraftState = {
+        outcome,
+        rating,
+        remarks,
+        referrals,
+        city,
+        location,
+        bikeType,
+      };
       localStorage.setItem(draftKey(caseId), JSON.stringify(payload));
     }, 2000);
     return () => window.clearInterval(id);
-  }, [caseId, outcome, rating, remarks, referrals]);
+  }, [caseId, outcome, rating, remarks, referrals, city, location, bikeType]);
 
   // Keyboard 0-5 for rating when CONNECTED
   useEffect(() => {
@@ -337,6 +371,9 @@ export function ActiveCaseForm({
         outcome,
         rating: connected ? rating : null,
         remarks,
+        city,
+        location,
+        bikeType,
         referrals: referrals
           .filter((r) => r.phone.trim() || r.name || r.experienceText || r.designation)
           .map((r) => ({
@@ -478,10 +515,50 @@ export function ActiveCaseForm({
             ) : null}
           </div>
         </div>
+        <div className="mt-3 grid gap-3 sm:grid-cols-3">
+          <div className="space-y-1">
+            <Label htmlFor="lead-city">City</Label>
+            <Input
+              id="lead-city"
+              value={city}
+              maxLength={80}
+              onChange={(e) => patchDraft({ city: e.target.value })}
+            />
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="lead-location">Location</Label>
+            <Input
+              id="lead-location"
+              value={location}
+              maxLength={120}
+              onChange={(e) => patchDraft({ location: e.target.value })}
+            />
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="lead-bike">Technician</Label>
+            <Select
+              id="lead-bike"
+              value={bikeType}
+              onChange={(e) =>
+                patchDraft({
+                  bikeType:
+                    e.target.value === "PETROL_BIKE" ||
+                    e.target.value === "EV_BIKE"
+                      ? e.target.value
+                      : "",
+                })
+              }
+            >
+              <option value="">Not set</option>
+              {BIKE_TYPE_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </Select>
+          </div>
+        </div>
         <div className="mt-3 flex flex-wrap gap-5 font-mono text-[13px] text-muted">
-          <span>
-            City <b className="font-normal text-muted-2">{lead.city ?? "—"}</b>
-          </span>
           <span>
             Trade <b className="font-normal text-muted-2">{lead.trade ?? "—"}</b>
           </span>

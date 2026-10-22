@@ -38,6 +38,8 @@ export default async function ActiveCasePage() {
         phone: open.lead.phone,
         name: open.lead.name,
         city: open.lead.city,
+        location: open.lead.location,
+        bikeType: open.lead.bikeType,
         trade: open.lead.trade,
         experienceYears:
           open.lead.experienceYears != null

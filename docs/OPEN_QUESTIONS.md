@@ -49,3 +49,4 @@ Anything ambiguous. Prefer the most conservative default until answered. Never s
 | OQ-009 | Designation combobox: closed list vs free text | Free text allowed; suggestions as listed in UI_SPEC | Resolved (spec) |
 | OQ-010 | Timezone for "today" case counts and daily cap | `Asia/Kolkata` calendar day | Resolved (spec) |
 | OQ-045 | Excel salary / CTC columns (current, expected, confirmed) | Store the sheet text on the lead. Do not convert to paise and do not treat sheet "Status" or "Joined" as `Lead.status` / `joined` | Assumed |
+| OQ-046 | ECR challan wage rupees, NCP days, EPS membership, refund | Wages and contributions are half-up to whole rupees. EPF wages never exceed gross. EPS and EDLI wages are EPF wages capped at the PF ceiling. Every PF member is treated as an EPS member. NCP is the days in the month when EPF wages are 0, otherwise days in the month minus payable days, half-up to an integer. Refund of advances is 0. | Assumed |

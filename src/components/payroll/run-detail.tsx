@@ -37,6 +37,11 @@ type Line = {
   employerEsicPaise: number;
 };
 
+type EcrSkip = {
+  employeeCode: string;
+  fullName: string;
+};
+
 type Totals = {
   earnedGrossPaise: number;
   pfEmployeePaise: number;
@@ -52,12 +57,14 @@ export function RunDetail({
   lines,
   totals,
   unmarkedHint,
+  ecrSkipped,
 }: {
   month: string;
   status: "DRAFT" | "LOCKED";
   lines: Line[];
   totals: Totals;
   unmarkedHint: number;
+  ecrSkipped: EcrSkip[];
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -132,6 +139,11 @@ export function RunDetail({
               PF
             </Button>
           </a>
+          <a href={`/api/admin/payroll/runs/${month}/export?kind=ecr`}>
+            <Button type="button" size="sm" variant="secondary">
+              ECR
+            </Button>
+          </a>
           <a href={`/api/admin/payroll/runs/${month}/export?kind=esic`}>
             <Button type="button" size="sm" variant="secondary">
               ESIC
@@ -144,6 +156,15 @@ export function RunDetail({
           </a>
         </div>
       </div>
+
+      {ecrSkipped.length > 0 ? (
+        <p className="text-sm text-muted">
+          Left out of ECR (UAN missing or not 12 digits):{" "}
+          {ecrSkipped
+            .map((row) => `${row.fullName} (${row.employeeCode})`)
+            .join(", ")}
+        </p>
+      ) : null}
 
       <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-6 text-sm">
         <Stat label="Earned gross" value={formatINR(totals.earnedGrossPaise)} />
