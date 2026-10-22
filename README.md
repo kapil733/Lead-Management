@@ -99,6 +99,19 @@ Validated at boot in `src/env.ts`.
 
 Serverless note: Vercel body limit ~4.5 MB — lead import rejects oversized files with a clear error.
 
+## Deploy (your own AWS server)
+
+The app is plain Postgres plus Next.js. `scripts/deploy-aws.sh` copies this repo to an EC2 instance over SSH, installs Node 20, can install Postgres on that same machine, runs migrations, and starts the site on port 80.
+
+```bash
+cp .env.aws.example .env.aws
+# fill DEPLOY_HOST, DEPLOY_USER, DEPLOY_SSH_KEY
+set -a && source .env.aws && set +a
+./scripts/deploy-aws.sh
+```
+
+The SSH user needs passwordless sudo. Open ports 22 and 80 in the instance security group. `.env.aws` is gitignored. Leave `DATABASE_URL` empty to create a database on that server. Set it if Postgres already lives somewhere else.
+
 ## Testing
 
 ```bash

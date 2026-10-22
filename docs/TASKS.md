@@ -99,6 +99,10 @@ Employee history no longer lists phone numbers. Opening one history row loads th
 
 The open case lets the telecaller edit city, type a location, and choose whether the lead is a petrol bike technician or an EV bike technician. Those values save on that lead when the case closes. Payroll runs download an EPFO ECR 2.0 `.txt` file (`kind=ecr`) built from each PF-applicable line. Employees without a 12-digit UAN are named on the run page and left out of the file.
 
+## AWS server deploy (2026-10-22)
+
+`scripts/deploy-aws.sh` copies the app to an EC2 instance using `DEPLOY_HOST`, `DEPLOY_USER`, and `DEPLOY_SSH_KEY`. It can install Postgres on that server, migrate, and serve the site on port 80.
+
 ## All phases complete
 
 No further phased build work in the master checklist. Follow-ups (Redis rate limits, employee Excel import wizard, branding settings) are tracked in `docs/OPEN_QUESTIONS.md`.
